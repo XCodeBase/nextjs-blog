@@ -25,21 +25,21 @@ RUN yarn install --frozen-lockfile
 RUN yarn build
 
 # Production image, copy all the files and run next
-FROM node:14-alpine AS runner
-WORKDIR /app
+FROM nginx:1.23.2-alpine AS production
+# WORKDIR /app
 
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 
 # Copy the build output to replace the default nginx contents.
 # COPY --from=build /app/next.config.js ./
-COPY --from=build /app/public ./public
-COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/out /usr/share/nginx/html/
+# COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
+# COPY --from=build /app/node_modules ./node_modules
+# COPY --from=build /app/package.json ./package.json
 
-USER root
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 3000
+EXPOSE 80
 
-CMD ["yarn", "start"]
+CMD ["nginx","-g","daemon off;"]
